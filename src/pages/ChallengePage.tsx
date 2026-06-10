@@ -41,7 +41,7 @@ export function ChallengePage() {
       isCorrect = userAnswer === currentQuestion.answer;
     }
 
-    recordAnswer(currentQuestion.id, userAnswer, isCorrect, 0);
+    recordAnswer(currentQuestion.id, userAnswer, isCorrect);
     
     setAnswers(prev => ({
       ...prev,

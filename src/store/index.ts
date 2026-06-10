@@ -14,7 +14,7 @@ interface QuizStore {
   exportQuestions: () => string;
 
   stats: QuizStats;
-  recordAnswer: (questionId: string, userAnswer: string | string[], isCorrect: boolean, timeSpent: number) => void;
+  recordAnswer: (questionId: string, userAnswer: string | string[], isCorrect: boolean) => void;
   addWrongQuestion: (question: Question, userAnswer: string | string[]) => void;
   removeWrongQuestion: (questionId: string) => void;
   updateWrongQuestion: (questionId: string, userAnswer: string | string[]) => void;

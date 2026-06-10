@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, Edit2, Trash2, Upload, Download, Search, X, Save } from 'lucide-react';
 import { useQuizStore } from '@/store';

@@ -23,7 +23,7 @@ export function WrongPage() {
       isCorrect = answer === question.answer;
     }
 
-    recordAnswer(questionId, answer, isCorrect, 0);
+    recordAnswer(questionId, answer, isCorrect);
     setShowResult(true);
 
     if (isCorrect) {

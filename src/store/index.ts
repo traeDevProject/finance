@@ -1,9 +1,17 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { Question, QuestionCategory, QuestionType, Level, QuizStats, ThemeState } from '@/types';
+import type { Question, QuestionCategory, QuestionType, Level, QuizStats, ThemeState, User, QuizProgress, BattleState } from '@/types';
 import { mockQuestions } from '@/data/mockData';
 
 interface QuizStore {
+  users: User[];
+  currentUserId: string;
+  
+  addUser: (name: string) => User;
+  switchUser: (userId: string) => void;
+  deleteUser: (userId: string) => void;
+  updateUser: (userId: string, updates: Partial<User>) => void;
+
   questions: Question[];
   addQuestion: (question: Question) => void;
   updateQuestion: (id: string, updates: Partial<Question>) => void;
@@ -26,6 +34,16 @@ interface QuizStore {
 
   theme: ThemeState;
   toggleTheme: () => void;
+
+  quizProgress: QuizProgress | null;
+  saveQuizProgress: (progress: QuizProgress) => void;
+  clearQuizProgress: () => void;
+
+  battle: BattleState;
+  startBattle: (player1Name: string, player2Name: string, maxQuestions: number) => void;
+  answerBattleQuestion: (player: 1 | 2, userAnswer: string | string[]) => void;
+  nextBattleQuestion: () => void;
+  endBattle: () => void;
 
   getTodayStats: () => { questionCount: number; correctCount: number };
   getStreakDays: () => number;
@@ -60,9 +78,60 @@ const initialStats: QuizStats = {
   dailyStats: [],
 };
 
+const defaultUser: User = {
+  id: 'default-user',
+  name: '默认用户',
+  avatar: '',
+  createdAt: Date.now(),
+};
+
+const initialBattleState: BattleState = {
+  isActive: false,
+  player1: { name: '玩家1', score: 0, answers: {} },
+  player2: { name: '玩家2', score: 0, answers: {} },
+  currentQuestion: null,
+  currentTurn: 1,
+  questionIndex: 0,
+  questions: [],
+  timeLeft: 30,
+  maxQuestions: 10,
+};
+
 export const useQuizStore = create<QuizStore>()(
   persist(
     (set, get) => ({
+      users: [defaultUser],
+      currentUserId: 'default-user',
+
+      addUser: (name) => {
+        const newUser: User = {
+          id: `user-${Date.now()}`,
+          name,
+          avatar: '',
+          createdAt: Date.now(),
+        };
+        set((state) => ({ users: [...state.users, newUser], currentUserId: newUser.id }));
+        return newUser;
+      },
+
+      switchUser: (userId) => {
+        set({ currentUserId: userId });
+      },
+
+      deleteUser: (userId) => {
+        const state = get();
+        if (state.users.length <= 1) return;
+        const newUsers = state.users.filter(u => u.id !== userId);
+        const newCurrentUserId = state.currentUserId === userId ? newUsers[0].id : state.currentUserId;
+        set({ users: newUsers, currentUserId: newCurrentUserId });
+      },
+
+      updateUser: (userId, updates) => {
+        set((state) => ({
+          users: state.users.map(u => u.id === userId ? { ...u, ...updates } : u),
+        }));
+      },
+
       questions: mockQuestions,
       addQuestion: (question) => set((state) => ({ questions: [...state.questions, question] })),
       updateQuestion: (id, updates) =>
@@ -216,6 +285,78 @@ export const useQuizStore = create<QuizStore>()(
       toggleTheme: () =>
         set((state) => ({ theme: { isDark: !state.theme.isDark } })),
 
+      quizProgress: null,
+      saveQuizProgress: (progress) => set({ quizProgress: progress }),
+      clearQuizProgress: () => set({ quizProgress: null }),
+
+      battle: initialBattleState,
+      startBattle: (player1Name, player2Name, maxQuestions) => {
+        const questions = [...get().questions].sort(() => Math.random() - 0.5);
+        const battleQuestions = questions.slice(0, maxQuestions).filter(q => q.type !== 'essay');
+        
+        set({
+          battle: {
+            isActive: true,
+            player1: { name: player1Name, score: 0, answers: {} },
+            player2: { name: player2Name, score: 0, answers: {} },
+            currentQuestion: battleQuestions[0] || null,
+            currentTurn: Math.random() > 0.5 ? 1 : 2,
+            questionIndex: 0,
+            questions: battleQuestions,
+            timeLeft: 30,
+            maxQuestions,
+          },
+        });
+      },
+      answerBattleQuestion: (player, userAnswer) => {
+        const battle = get().battle;
+        if (!battle.currentQuestion || battle.currentTurn !== player) return;
+
+        const question = battle.currentQuestion;
+        let isCorrect = false;
+        if (Array.isArray(question.answer)) {
+          isCorrect = Array.isArray(userAnswer) &&
+            userAnswer.length === question.answer.length &&
+            userAnswer.every(a => question.answer.includes(a));
+        } else {
+          isCorrect = userAnswer === question.answer;
+        }
+
+        set((state) => {
+          const newBattle = { ...state.battle };
+          if (player === 1) {
+            newBattle.player1.score += isCorrect ? 10 : 0;
+            newBattle.player1.answers[question.id] = isCorrect;
+          } else {
+            newBattle.player2.score += isCorrect ? 10 : 0;
+            newBattle.player2.answers[question.id] = isCorrect;
+          }
+          newBattle.currentTurn = player === 1 ? 2 : 1;
+          newBattle.timeLeft = 30;
+          return { battle: newBattle };
+        });
+      },
+      nextBattleQuestion: () => {
+        const battle = get().battle;
+        if (battle.questionIndex >= battle.questions.length - 1) {
+          get().endBattle();
+          return;
+        }
+
+        set((state) => ({
+          battle: {
+            ...state.battle,
+            questionIndex: state.battle.questionIndex + 1,
+            currentQuestion: state.battle.questions[state.battle.questionIndex + 1],
+            currentTurn: Math.random() > 0.5 ? 1 : 2,
+            timeLeft: 30,
+          },
+        }));
+      },
+      endBattle: () => {
+        set({ battle: initialBattleState });
+      },
+
       getTodayStats: () => {
         const today = new Date().toISOString().split('T')[0];
         const todayStats = get().stats.dailyStats.find((d) => d.date === today);
@@ -226,10 +367,13 @@ export const useQuizStore = create<QuizStore>()(
     {
       name: 'quiz-storage',
       partialize: (state) => ({
+        users: state.users,
+        currentUserId: state.currentUserId,
         questions: state.questions,
         stats: state.stats,
         levels: state.levels,
         theme: state.theme,
+        quizProgress: state.quizProgress,
       }),
     }
   )

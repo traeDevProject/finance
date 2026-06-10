@@ -74,6 +74,44 @@ export interface ThemeState {
   isDark: boolean;
 }
 
+export interface User {
+  id: string;
+  name: string;
+  avatar: string;
+  createdAt: number;
+}
+
+export interface QuizProgress {
+  mode: 'timer' | 'challenge';
+  levelId?: number;
+  currentQuestionIndex: number;
+  answers: Record<string, { answer: string | string[], correct: boolean }>;
+  gameQuestions: string[];
+  timeLeft?: number;
+  timestamp: number;
+}
+
+export interface BattleState {
+  isActive: boolean;
+  player1: { name: string; score: number; answers: Record<string, boolean> };
+  player2: { name: string; score: number; answers: Record<string, boolean> };
+  currentQuestion: Question | null;
+  currentTurn: 1 | 2;
+  questionIndex: number;
+  questions: Question[];
+  timeLeft: number;
+  maxQuestions: number;
+}
+
+export interface UserData {
+  user: User;
+  questions: Question[];
+  stats: QuizStats;
+  levels: Level[];
+  theme: ThemeState;
+  quizProgress: QuizProgress | null;
+}
+
 export const CATEGORIES: CategoryInfo[] = [
   { id: 'finance_law', name: '财经法规', description: '金融相关法律法规知识', icon: 'scale' },
   { id: 'finance_knowledge', name: '理财知识', description: '投资理财基础知识', icon: 'piggy-bank' },

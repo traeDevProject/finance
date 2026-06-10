@@ -13,6 +13,7 @@ const menuItems = [
   { id: 'home', label: '首页', icon: BookOpen },
   { id: 'challenge', label: '闯关模式', icon: Trophy },
   { id: 'timer', label: '计时模式', icon: Timer },
+  { id: 'battle', label: '双人对战', icon: Trophy },
   { id: 'wrong', label: '错题本', icon: FileText },
   { id: 'stats', label: '数据统计', icon: BarChart3 },
   { id: 'manage', label: '题库管理', icon: BookOpen },
@@ -83,44 +84,53 @@ export function Layout({ children, currentPage, onPageChange }: LayoutProps) {
             </div>
           </div>
         </div>
-      </header>
 
-      <AnimatePresence>
-        {mobileMenuOpen && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            className={`lg:hidden border-b ${theme.isDark ? 'border-border-dark bg-bg-dark/95' : 'border-border-light bg-card-light/95'} backdrop-blur-md`}
-          >
-            <nav className="px-4 py-4 space-y-2">
-              {menuItems.map((item) => {
-                const Icon = item.icon;
-                return (
-                  <button
-                    key={item.id}
-                    onClick={() => {
-                      onPageChange(item.id);
-                      setMobileMenuOpen(false);
-                    }}
-                    className={`w-full flex items-center gap-4 px-5 py-4 rounded-xl transition-all duration-200 ${
-                      currentPage === item.id
-                        ? 'bg-primary text-white'
-                        : theme.isDark
-                        ? 'hover:bg-card-dark'
-                        : 'hover:bg-gray-50'
-                    }`}
-                  >
-                    <Icon className="w-6 h-6" />
-                    <span className="font-semibold text-lg">{item.label}</span>
-                    {currentPage === item.id && <ChevronRight className="w-5 h-5 ml-auto" />}
-                  </button>
-                );
-              })}
-            </nav>
-          </motion.div>
-        )}
-      </AnimatePresence>
+        <AnimatePresence>
+          {mobileMenuOpen && (
+            <>
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="fixed inset-0 bg-black/30 z-40 lg:hidden"
+                onClick={() => setMobileMenuOpen(false)}
+              />
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9, y: -20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.9, y: -20 }}
+                className={`absolute top-full right-4 mt-2 w-auto min-w-[200px] max-w-[280px] rounded-2xl shadow-2xl border ${theme.isDark ? 'bg-bg-dark border-border-dark' : 'bg-card-light border-border-light'} backdrop-blur-lg z-50 lg:hidden`}
+              >
+                <nav className="py-2">
+                  {menuItems.map((item) => {
+                    const Icon = item.icon;
+                    return (
+                      <button
+                        key={item.id}
+                        onClick={() => {
+                          onPageChange(item.id);
+                          setMobileMenuOpen(false);
+                        }}
+                        className={`w-full flex items-center gap-4 px-5 py-3 transition-all duration-200 ${
+                          currentPage === item.id
+                            ? 'bg-primary text-white'
+                            : theme.isDark
+                            ? 'hover:bg-card-dark'
+                            : 'hover:bg-gray-50'
+                        }`}
+                      >
+                        <Icon className="w-5 h-5" />
+                        <span className="font-medium text-base">{item.label}</span>
+                        {currentPage === item.id && <ChevronRight className="w-5 h-5 ml-auto" />}
+                      </button>
+                    );
+                  })}
+                </nav>
+              </motion.div>
+            </>
+          )}
+        </AnimatePresence>
+      </header>
 
       <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {children}

@@ -3,6 +3,7 @@ import { Layout } from '@/components/Layout';
 import { HomePage } from '@/pages/HomePage';
 import { ChallengePage } from '@/pages/ChallengePage';
 import { TimerPage } from '@/pages/TimerPage';
+import { BattlePage } from '@/pages/BattlePage';
 import { WrongPage } from '@/pages/WrongPage';
 import { StatsPage } from '@/pages/StatsPage';
 import { ManagePage } from '@/pages/ManagePage';
@@ -28,6 +29,8 @@ function App() {
         return <ChallengePage />;
       case 'timer':
         return <TimerPage />;
+      case 'battle':
+        return <BattlePage />;
       case 'wrong':
         return <WrongPage />;
       case 'stats':
